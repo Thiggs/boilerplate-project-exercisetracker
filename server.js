@@ -1,3 +1,7 @@
+///////////////////////////////////////////////////
+//Dependencies
+///////////////////////////////////////////////////
+
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
@@ -5,6 +9,10 @@ const mongo = require('mongodb').MongoClient;
 const shortid = require('shortid')
 const cors = require('cors')
 const mongoose = require('mongoose')
+
+///////////////////////////////////////////////////
+//Set up app
+///////////////////////////////////////////////////
 
 app.use(cors())
 
@@ -21,6 +29,10 @@ mongoose.connect(process.env.MONGO_URI, function (err) {
    if (err) console.error(err);
 });
 
+///////////////////////////////////////////////////
+//Define the Schema
+///////////////////////////////////////////////////
+
 const Schema = mongoose.Schema;
 
 const personSchema = new Schema({
@@ -30,7 +42,10 @@ const personSchema = new Schema({
   date: {}
 });
 
+///////////////////////////////////////////////////
 //Create new username if unique
+///////////////////////////////////////////////////
+
 var Person = mongoose.model("Person", personSchema);
 
 var createPerson = (name, done)=>{
@@ -43,11 +58,8 @@ var createPerson = (name, done)=>{
       }
     else {
       const person = new Person({
-        username: name,
-        exercise: "",
-        duration: "",
-        date: {}
-        })
+        username: name
+      })
         person.save((err,data)=>{
           if(err){
             done(err);
@@ -67,24 +79,34 @@ app.post("/api/exercise/new-user", (req, res)=>{
       res.send({error: "error"});
     }
   else
-  res.send({"username":nameData.username});
+  res.json(nameData);
   });
 });
 
-
-
- 
+///////////////////////////////////////////////////
+//Get Array of all users
+/////////////////////////////////////////////////// 
 
 //I can get an array of all users by getting api/exercise/users with the same info as when creating a user.
 
-//Add Exercises
+
+///////////////////////////////////////////////////
+//Add an Exercise
+///////////////////////////////////////////////////
 
   //if required data is not entered return Path `duration`/`description is required.
 
   //return object containing the username, exercise, duration, and date (default to today)
 
 
-  //you can retrieve all of a users data from GET users's exercise log: GET /api/exercise/log?{userId}[&from][&to][&limit]
+///////////////////////////////////////////////////
+//Get Exercise Log
+///////////////////////////////////////////////////
+
+  //you can retrieve all of a users data from GET users's exercise log by entering userid. 
+//Will return Object with array log and count of exercises
+//Will return partial data based on optional parameters, as below
+//GET /api/exercise/log?{userId}[&from][&to][&limit]
 
 //{ } = required, [ ] = optional
 
@@ -96,7 +118,9 @@ app.post("/api/exercise/new-user", (req, res)=>{
 
 
 
-
+///////////////////////////////////////////////////
+//Error handling and listener
+///////////////////////////////////////////////////
 
 
 // Not found middleware
