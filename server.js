@@ -87,8 +87,16 @@ app.post("/api/exercise/new-user", (req, res)=>{
 //Get Array of all users
 /////////////////////////////////////////////////// 
 
-//I can get an array of all users by getting api/exercise/users with the same info as when creating a user.
-
+app.get('/api/exercise/users', (req, res) => {
+  Person.find({}, {username: 1, _id:1}, function(err, docs){
+    if(err){
+      res.send({error: "error"})
+    }
+    else
+      console.log(docs);
+      res.json(docs);
+  });
+});
 
 ///////////////////////////////////////////////////
 //Add an Exercise
