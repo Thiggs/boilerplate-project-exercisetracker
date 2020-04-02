@@ -37,9 +37,9 @@ const Schema = mongoose.Schema;
 
 const personSchema = new Schema({
   username: { type: String, required: true, default: shortid.generate},
-  exercise: String,
-  duration: String,
-  date: {}
+  description: [String],
+  duration: [Number],
+  date: [String]
 });
 
 ///////////////////////////////////////////////////
@@ -49,7 +49,7 @@ const personSchema = new Schema({
 var Person = mongoose.model("Person", personSchema);
 
 var createPerson = (name, done)=>{
-  Person.findOne({username: name}, (err, searchData)=>{
+  Person.findOne({username: name}, {username: 1, _id:1}, (err, searchData)=>{
     if(searchData) {
       done(null, "used");
       }
@@ -88,16 +88,15 @@ app.post("/api/exercise/new-user", (req, res)=>{
 /////////////////////////////////////////////////// 
 
 app.get('/api/exercise/users', (req, res) => {
-  Person.find({}, {username: 1, _id:1}, function(err, docs){
-    if(err){
-      res.send({error: "error"})
-    }
-    else
-      console.log(docs);
-      res.json(docs);
-  });
+    Person.find({}, {username: 1, _id:1}, function(err, docs){
+      if(err){
+        res.send({error: "error"})
+      }
+      else
+        res.json(docs);
+    });
 });
-
+ 
 ///////////////////////////////////////////////////
 //Add an Exercise
 ///////////////////////////////////////////////////
@@ -112,15 +111,19 @@ var addExercise = (iden, desc, durat, reqDate, done)=>{
         done(err);
       }
     else {
-      searchData.exercise.push(desc);
-      searchData.duration.push(durat);
-      searchData.date.push(reqDate);
-      searchData.save((err, data)=>{
-        if(err){
-        done(err)
+      searchData.description.push(desc);
+      searchData.duration.push(parseInt(durat));
+      searchData.date.push(new Date( reqDate.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3") ));
+      searchData.save()
+      
+      var retData={
+            username: searchData.username,
+            description: desc,
+            duration: parseInt(durat),
+            _id: searchData._id,
+            date: (new Date( reqDate.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3")).toDateString())
       }
-          done(null , data);
-        });
+       done(null, retData);
     }
         });
 }
@@ -139,6 +142,10 @@ app.post("/api/exercise/add", (req, res)=>{
   }
   else if(!req.body.duration){
     res.send("duration is required")
+    return;
+  }
+    else if(isNaN(req.body.duration)==true){
+    res.send("duration must be a number (mins)")
     return;
   }
   else if (!req.body.date){
@@ -170,6 +177,24 @@ app.post("/api/exercise/add", (req, res)=>{
 //Get Exercise Log
 ///////////////////////////////////////////////////
 
+//user id url to test.  https://cubic-spiced-blue.glitch.me/api/exercise/log?userId=5e86299465756836e4d50f6c
+
+app.get('/api/exercise/log', (req, res) => {
+  if(!req.query.userId){
+    res.send("you must enter a userId. Format: https://cubic-spiced-blue.glitch.me/api/exercise/log?userId=&ltuserId&gt")
+    return;
+  }
+    Person.findOne({_id: req.query.userId}, function(err, docs){
+      if(err){
+        res.send({error: "userId not found"})
+        return;
+      }
+      else{
+        //restrict by params
+        res.json(docs);
+      }
+    });
+});
   //you can retrieve all of a users data from GET users's exercise log by entering userid. 
 //Will return Object with array log and count of exercises
 //Will return partial data based on optional parameters, as below
