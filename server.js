@@ -102,10 +102,69 @@ app.get('/api/exercise/users', (req, res) => {
 //Add an Exercise
 ///////////////////////////////////////////////////
 
-  //if required data is not entered return Path `duration`/`description is required.
+var addExercise = (iden, desc, durat, reqDate, done)=>{
+  const filter = {_id: iden}
+    Person.findOne(filter, (err, searchData)=>{
+    if(!searchData) {
+      done(null, "Id not found");
+      }
+    else if (err){
+        done(err);
+      }
+    else {
+      searchData.exercise.push(desc);
+      searchData.duration.push(durat);
+      searchData.date.push(reqDate);
+      searchData.save((err, data)=>{
+        if(err){
+        done(err)
+      }
+          done(null , data);
+        });
+    }
+        });
+}
 
-  //return object containing the username, exercise, duration, and date (default to today)
-
+app.post("/api/exercise/add", (req, res)=>{
+  var dateToPass = {}
+  var error = false;
+  
+  if(!req.body.userId){
+    res.send("id is required");
+    return;
+  }
+  else if(!req.body.description){
+    res.send("description is required");
+    return;
+  }
+  else if(!req.body.duration){
+    res.send("duration is required")
+    return;
+  }
+  else if (!req.body.date){
+          dateToPass=new Date().toISOString().substring(0,10)
+        }
+  else {
+        var regEx = /^\d{4}-\d{2}-\d{2}$/;
+        if(!req.body.date.match(regEx)){
+        res.send("invalid date format");
+          return;
+        }
+        else dateToPass=req.body.date
+  }
+    addExercise(req.body.userId, req.body.description, req.body.duration, dateToPass, (err, idData)=>{
+    if (idData === "noID"){
+      res.send({"error": "id not found"});
+    }
+    
+    else if(err){
+      res.send({error: "error"});
+    }
+  else
+    res.json(idData);
+    });
+  
+});
 
 ///////////////////////////////////////////////////
 //Get Exercise Log
