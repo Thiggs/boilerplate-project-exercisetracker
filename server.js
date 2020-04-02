@@ -210,7 +210,7 @@ Person.findOne({_id: req.query.userId}, (err, searchData)=>{
       var start = new Date(-8640000000000000);
       var end = new Date();
       var limit = searchData.date.length-1
-      console.log(limit+ req.query.limit)
+
       if(req.query.from){
         start = new Date( req.query.from.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3") )
       }
