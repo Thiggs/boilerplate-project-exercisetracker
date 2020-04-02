@@ -202,7 +202,7 @@ Person.findOne({_id: req.query.userId}, (err, searchData)=>{
       }
       else{
       var retData={
-        _id: searchData.id,
+        _id: searchData._id,
         username: searchData.username,
         count: 0,
         log:[]   
@@ -210,18 +210,21 @@ Person.findOne({_id: req.query.userId}, (err, searchData)=>{
       var start = new Date(-8640000000000000);
       var end = new Date();
       var limit = searchData.date.length-1
-      console.log("sel"+start+end+limit)
-      console.log("query"+req.query.from)
+      console.log(limit+ req.query.limit)
       if(req.query.from){
         start = new Date( req.query.from.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3") )
       }
-        console.log("updatedstart"+start)
       if (req.query.to){
         end = new Date( req.query.to.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3") )
       }
-      if (req.query.limit&&req.query.limit<limit&&req.query.limit>=1){
+      if (req.query.limit&&req.query.limit==0){
+        res.send(retData)
+        return;
+      }
+      else if (req.query.limit&&req.query.limit<=limit){
         limit=req.query.limit-1
       }
+
 //        push data into retData.log based on url params
       for(var i=0; i<=limit;i++){
         if(searchData.date[i]>start&&searchData.date[i]<end){
