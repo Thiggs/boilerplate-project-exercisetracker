@@ -39,7 +39,7 @@ const personSchema = new Schema({
   username: { type: String, required: true, default: shortid.generate},
   description: [String],
   duration: [Number],
-  date: [String]
+  date: [Date]
 });
 
 ///////////////////////////////////////////////////
@@ -177,38 +177,67 @@ app.post("/api/exercise/add", (req, res)=>{
 //Get Exercise Log
 ///////////////////////////////////////////////////
 
-//user id url to test.  https://cubic-spiced-blue.glitch.me/api/exercise/log?userId=5e86299465756836e4d50f6c
-
 app.get('/api/exercise/log', (req, res) => {
   if(!req.query.userId){
     res.send("you must enter a userId. Format: https://cubic-spiced-blue.glitch.me/api/exercise/log?userId=&ltuserId&gt")
     return;
   }
-    Person.findOne({_id: req.query.userId}, function(err, docs){
+  else if(req.query.from){
+        var regEx = /^\d{4}-\d{2}-\d{2}$/;
+        if(!req.query.from.match(regEx)){
+        res.send("invalid from date format");
+          return;}
+  }
+  else if(req.query.to){
+        var regEx = /^\d{4}-\d{2}-\d{2}$/;
+        if(!req.query.to.match(regEx)){
+        res.send("invalid to date format");
+          return;
+        }
+  }
+Person.findOne({_id: req.query.userId}, (err, searchData)=>{
       if(err){
         res.send({error: "userId not found"})
         return;
       }
       else{
-        //restrict by params
-        res.json(docs);
+      var retData={
+        _id: searchData.id,
+        username: searchData.username,
+        count: 0,
+        log:[]   
+      }      
+      var start = new Date(-8640000000000000);
+      var end = new Date();
+      var limit = searchData.date.length-1
+      console.log("sel"+start+end+limit)
+      console.log("query"+req.query.from)
+      if(req.query.from){
+        start = new Date( req.query.from.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3") )
       }
-    });
+        console.log("updatedstart"+start)
+      if (req.query.to){
+        end = new Date( req.query.to.replace( /(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3") )
+      }
+      if (req.query.limit&&req.query.limit<limit&&req.query.limit>=1){
+        limit=req.query.limit-1
+      }
+//        push data into retData.log based on url params
+      for(var i=0; i<=limit;i++){
+        if(searchData.date[i]>start&&searchData.date[i]<end){
+          retData.log.push({
+            description: searchData.description[i],
+            duration: searchData.duration[i],
+            date: searchData.date[i].toDateString()
+          })
+          retData.count++
+        }
+      }
+        res.json(retData);
+      
+    }
 });
-  //you can retrieve all of a users data from GET users's exercise log by entering userid. 
-//Will return Object with array log and count of exercises
-//Will return partial data based on optional parameters, as below
-//GET /api/exercise/log?{userId}[&from][&to][&limit]
-
-//{ } = required, [ ] = optional
-
-//from, to = dates (yyyy-mm-dd); limit = number
-
-
-
-
-
-
+});
 
 ///////////////////////////////////////////////////
 //Error handling and listener
